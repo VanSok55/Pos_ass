@@ -3,7 +3,7 @@ session_start();
 
 // Check if the user is logged in (i.e., if the session variable is set)
 if (!isset($_SESSION['u_name'])) {
-    header("Location: form.php"); // Redirect to the login page if not logged in
+    header("Location: index.php"); // Redirect to the login page if not logged in
     exit();
 }
 

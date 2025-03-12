@@ -1,14 +1,37 @@
-const register = document.getElementById("register");
-const login = document.getElementById("login");
-const btn_register = document.getElementById("btn-register");
-const btn_log = document.getElementById("btn-log");
+document.addEventListener('DOMContentLoaded', function() {
+  const loginCard = document.getElementById('login');
+  const registerCard = document.getElementById('register');
+  const btnRegister = document.getElementById('btn-register');
+  const btnLogin = document.getElementById('btn-log');
 
-btn_register.addEventListener("click", function () {
-  register.style.display = "block";
-  login.style.display = "none";
+  // Initially show login form
+  loginCard.classList.add('active');
+
+  // Switch to register form
+  btnRegister.addEventListener('click', function() {
+    loginCard.style.display = 'none';
+    loginCard.classList.remove('active');
+
+    registerCard.style.display = 'block';
+    setTimeout(() => {
+      registerCard.classList.add('active');
+    }, 10);
+  });
+
+  // Switch to login form
+  btnLogin.addEventListener('click', function() {
+    registerCard.style.display = 'none';
+    registerCard.classList.remove('active');
+
+    loginCard.style.display = 'block';
+    setTimeout(() => {
+      loginCard.classList.add('active');
+    }, 10);
+  });
 });
 
-btn_log.addEventListener("click", function () {
-  register.style.display = "none";
-  login.style.display = "block";
-});
+function togglePasswordVisibility(inputId) {
+  const passwordInput = document.getElementById(inputId);
+  const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+  passwordInput.setAttribute('type', type);
+}

@@ -2,7 +2,7 @@
 session_start();
 if(!isset($_SESSION['u_name']))
 {
-    header("Location: form.php");
+    header("Location: index.php");
     exit();
 }
 include("connection.php");

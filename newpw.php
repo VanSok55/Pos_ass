@@ -41,7 +41,7 @@
            if( $conn->query($sql))
            {
                 session_destroy();
-                echo"<script>alert ('The Password update succussuly!!!'); window.location='form.php'</script>";
+                echo"<script>alert ('The Password update succussuly!!!'); window.location='index.php'</script>";
            }else{
                 echo"<script>alert ('The Password update failed!! error');</script>";
            }

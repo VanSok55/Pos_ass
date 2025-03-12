@@ -1,4 +1,5 @@
 <?php
+global $conn;
 session_start();
 include("connection.php");
 
@@ -27,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($stmt->execute()) {
             // Ensure no output before header()
             ob_start();
-            header("Location: form.php");
+            header("Location: index.php");
             ob_end_flush();
             exit();
         } else {
