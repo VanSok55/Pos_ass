@@ -1,5 +1,4 @@
 <?php
-global $conn;
 session_start();
 include("connection.php");
 
