@@ -10,8 +10,9 @@ if ($product_id) {
     $stmt->bind_param("i", $product_id);
 
     if ($stmt->execute()) {
-        $_SESSION['product_success'] = 'Product deleted successfully!';
+        // Redirect directly without showing an alert message
         header("Location: product.php");
+        exit; // Ensure the script stops executing after the redirect
     } else {
         echo "Error deleting product: " . $stmt->error;
     }

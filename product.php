@@ -2,25 +2,40 @@
 session_start();
 include("connection.php");
 
+// Handle success messages
 if (isset($_SESSION['product_success'])) {
-    echo "<script>alert('" . $_SESSION['product_success'] . "');</script>";
-    unset($_SESSION['product_success']); // Remove it so it only shows once
+    echo "<script>alert('" . addslashes($_SESSION['product_success']) . "');</script>";
+    unset($_SESSION['product_success']);
 }
 
-$search = isset($_GET['search']) ? $_GET['search'] : '';
-$category_filter = isset($_GET['category_filter']) ? $_GET['category_filter'] : '';
+// Initialize filters
+$search = $_GET['search'] ?? '';
+$category_filter = $_GET['category_filter'] ?? '';
 
-$query = "SELECT * FROM tb_product WHERE 1";
+// Build query with prepared statements
+$query = "SELECT * FROM tb_product WHERE 1=1";
+$types = '';
+$params = [];
 
 if (!empty($search)) {
-    $query .= " AND name LIKE '%$search%'";
+    $query .= " AND name LIKE ?";
+    $types .= 's';
+    $params[] = "%{$search}%";
 }
 
 if (!empty($category_filter)) {
-    $query .= " AND category = '$category_filter'";
+    $query .= " AND category = ?";
+    $types .= 's';
+    $params[] = $category_filter;
 }
 
-$result = $conn->query($query);
+// Prepare and execute statement
+$stmt = $conn->prepare($query);
+if ($types !== '') {
+    $stmt->bind_param($types, ...$params);
+}
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -28,116 +43,184 @@ $result = $conn->query($query);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product List</title>
-    <link rel="stylesheet" href="style/product-list.css">
-    <!-- Font Awesome for icons -->
+    <title>Product Inventory</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-<div class="container">
-    <a href="dashboard.php" class="back-to-dashboard">
-        <i class="fas fa-arrow-left"></i> Back to Dashboard
-    </a>
-
-    <div class="page-header">
-        <h1 class="page-title">Product List</h1>
-
-        <div class="filters-container">
-            <form id="search-form" class="search-form" method="GET">
-                <input
-                        type="text"
-                        id="search-input"
-                        name="search"
-                        class="search-input"
-                        placeholder="Search products..."
-                        value="<?php echo htmlspecialchars($search); ?>"
-                >
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i> Search
-                </button>
-            </form>
-
-            <form id="filter-form" class="filter-form" method="GET">
-                <select id="category-filter" name="category_filter" class="filter-select">
-                    <option value="">All Categories</option>
-                    <option value="Electronics" <?php if($category_filter == "Electronics") echo "selected"; ?>>Electronics</option>
-                    <option value="Clothing" <?php if($category_filter == "Clothing") echo "selected"; ?>>Clothing</option>
-                    <option value="Home Appliances" <?php if($category_filter == "Home Appliances") echo "selected"; ?>>Home Appliances</option>
-                    <option value="Books" <?php if($category_filter == "Books") echo "selected"; ?>>Books</option>
-                </select>
-                <button type="submit" class="btn btn-outline">
-                    <i class="fas fa-filter"></i> Filter
-                </button>
-            </form>
-
-            <?php if(!empty($search) || !empty($category_filter)): ?>
-                <button id="clear-filters" class="btn btn-outline">
-                    <i class="fas fa-times"></i> Clear Filters
-                </button>
-            <?php endif; ?>
-
-            <a href="insert.php" class="btn btn-primary" style="margin-left: auto;">
-                <i class="fas fa-plus"></i> Add Product
+<body class="bg-gray-50/50">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        <div class="space-y-2">
+            <h1 class="text-2xl font-bold text-gray-900">Product Inventory</h1>
+            <a href="dashboard.php" class="text-sm text-gray-500 hover:text-gray-700 inline-flex items-center">
+                <i class="fas fa-chevron-left mr-1.5 h-3 w-3"></i>
+                Back to Dashboard
             </a>
         </div>
+        <a href="insert.php" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg">
+            <i class="fas fa-plus mr-2 -ml-1"></i>
+            New Product
+        </a>
     </div>
 
+    <!-- Filters Section -->
+    <div class="mb-8 bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+        <form method="GET" class="flex flex-col sm:flex-row gap-4">
+            <div class="relative flex-1">
+                <input
+                    type="text"
+                    name="search"
+                    value="<?= htmlspecialchars($search) ?>"
+                    placeholder="Search products..."
+                    class="w-full pl-4 pr-10 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                >
+                <button type="submit" class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            
+            <div class="relative flex-1">
+                <select 
+                    name="category_filter" 
+                    class="pl-4 pr-8 py-2.5 text-sm border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full outline-none"
+                >
+                    <option value="">All Categories</option>
+                    <option value="Electronics" <?= $category_filter === "Electronics" ? 'selected' : '' ?>>Electronics</option>
+                    <option value="Clothing" <?= $category_filter === "Clothing" ? 'selected' : '' ?>>Clothing</option>
+                    <option value="Home Appliances" <?= $category_filter === "Home Appliances" ? 'selected' : '' ?>>Home Appliances</option>
+                    <option value="Books" <?= $category_filter === "Books" ? 'selected' : '' ?>>Books</option>
+                </select>
+                <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                    <i class="fas fa-chevron-down text-gray-400"></i>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit" class="px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg w-full sm:w-auto">
+                    Apply Filters
+                </button>
+                <?php if(!empty($search) || !empty($category_filter)): ?>
+                <a 
+                    href="?" 
+                    class="px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 border border-gray-300 rounded-lg flex items-center"
+                >
+                    Clear Filters
+                </a>
+                <?php endif; ?>
+            </div>
+        </form>
+    </div>
+
+    <!-- Product Grid -->
     <?php if ($result->num_rows > 0): ?>
-        <div class="product-grid">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <?php while ($row = $result->fetch_assoc()): ?>
-                <div class="product-card">
-                    <div class="product-image-container">
-                        <img src="<?php echo $row['image']; ?>" class="product-image" alt="<?php echo htmlspecialchars($row['name']); ?>">
-                        <div class="product-category-badge"><?php echo htmlspecialchars($row['category']); ?></div>
+            <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 overflow-hidden">
+                <div class="aspect-square bg-gray-100 relative">
+                    <img 
+                        src="<?= htmlspecialchars($row['image']) ?>" 
+                        alt="<?= htmlspecialchars($row['name']) ?>" 
+                        class="w-full h-full object-cover"
+                    >
+                    <div class="absolute top-3 right-3 flex items-center gap-2">
+                        <span class="px-3 py-1 text-xs font-medium rounded-full bg-white/90 backdrop-blur shadow-sm <?= 
+                            $row['stock'] > 10 ? 'text-green-700 bg-green-50' : 
+                            ($row['stock'] > 0 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50') 
+                        ?>">
+                            <?= $row['stock'] > 10 ? 'In Stock' : ($row['stock'] > 0 ? 'Low Stock' : 'Out of Stock') ?>
+                        </span>
                     </div>
-
-                    <div class="product-details">
-                        <h3 class="product-name"><?php echo htmlspecialchars($row['name']); ?></h3>
-
-                        <div class="product-meta">
-                            <div class="product-price">$<?php echo number_format($row['price'], 2); ?></div>
-
-                            <?php if($row['stock'] > 10): ?>
-                                <div class="product-stock in-stock">
-                                    <i class="fas fa-check-circle"></i> In Stock
-                                </div>
-                            <?php elseif($row['stock'] > 0): ?>
-                                <div class="product-stock low-stock">
-                                    <i class="fas fa-exclamation-circle"></i> Low Stock
-                                </div>
-                            <?php else: ?>
-                                <div class="product-stock out-of-stock">
-                                    <i class="fas fa-times-circle"></i> Out of Stock
-                                </div>
-                            <?php endif; ?>
-                        </div>
-
-                        <div class="product-info">
-                            <div class="product-date">
-                                <i class="far fa-calendar-alt"></i> Added <?php echo date('M d, Y', strtotime($row['created_at'])); ?>
-                            </div>
-                        </div>
-
-                        <div class="product-actions">
-                            <a href="edit.php?id=<?php echo $row['id']; ?>" class="action-btn btn-edit">
-                                <i class="fas fa-edit"></i> Edit
+                </div>
+                
+                <div class="p-4">
+                    <h3 class="text-lg font-medium text-gray-900 truncate mb-1"><?= htmlspecialchars($row['name']) ?></h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xl font-semibold text-gray-900">$<?= number_format($row['price'], 2) ?></span>
+                        <div class="flex items-center gap-2">
+                            <a 
+                                href="edit.php?id=<?= $row['id'] ?>" 
+                                class="w-9 h-9 inline-flex items-center justify-center text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                                title="Edit"
+                            >
+                                <i class="fas fa-pencil-alt"></i>
                             </a>
-                            <a href="delete.php?id=<?php echo $row['id']; ?>" class="action-btn btn-delete">
-                                <i class="fas fa-trash"></i> Delete
-                            </a>
+                            <button 
+                                onclick="confirmDelete(<?= $row['id'] ?>)" 
+                                class="w-9 h-9 inline-flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg"
+                                title="Delete"
+                            >
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
+            </div>
             <?php endwhile; ?>
         </div>
     <?php else: ?>
-        <div class="no-products">
-            <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
-            <p>No products found. Try a different search or add a new product.</p>
+        <div class="text-center py-16 bg-white rounded-xl border border-gray-200">
+            <div class="max-w-md mx-auto">
+                <div class="w-24 h-24 rounded-full bg-indigo-50 mx-auto mb-6 flex items-center justify-center">
+                    <i class="fas fa-box-open text-3xl text-indigo-600"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+                <p class="text-sm text-gray-500">Try adjusting your search or filters</p>
+            </div>
         </div>
     <?php endif; ?>
 </div>
 
-<script src="products-list.js"></script>
+<!-- Delete Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Delete product?</h3>
+                <p class="text-sm text-gray-500 mb-6">This action cannot be undone.</p>
+                <div class="flex gap-3">
+                    <button 
+                        id="cancelDelete"
+                        class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-lg"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        id="confirmDelete"
+                        class="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg"
+                    >
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(productId) {
+    const modal = document.getElementById("deleteModal");
+    modal.classList.remove("hidden");
+    
+    document.getElementById("confirmDelete").onclick = function() {
+        window.location.href = "delete.php?id=" + productId;
+    }
+
+    document.getElementById("cancelDelete").onclick = function() {
+        modal.classList.add("hidden");
+    }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById("deleteModal");
+    if (event.target === modal) {
+        modal.classList.add("hidden");
+    }
+}
+</script>
 </body>
 </html>
