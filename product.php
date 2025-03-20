@@ -114,51 +114,59 @@ $result = $stmt->get_result();
 
     <!-- Product Grid -->
     <?php if ($result->num_rows > 0): ?>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <?php while ($row = $result->fetch_assoc()): ?>
-            <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 overflow-hidden">
-                <div class="aspect-square bg-gray-100 relative">
-                    <img 
-                        src="<?= htmlspecialchars($row['image']) ?>" 
-                        alt="<?= htmlspecialchars($row['name']) ?>" 
-                        class="w-full h-full object-cover"
-                    >
-                    <div class="absolute top-3 right-3 flex items-center gap-2">
-                        <span class="px-3 py-1 text-xs font-medium rounded-full bg-white/90 backdrop-blur shadow-sm <?= 
-                            $row['stock'] > 10 ? 'text-green-700 bg-green-50' : 
-                            ($row['stock'] > 0 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50') 
-                        ?>">
-                            <?= $row['stock'] > 10 ? 'In Stock' : ($row['stock'] > 0 ? 'Low Stock' : 'Out of Stock') ?>
-                        </span>
-                    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <?php while ($row = $result->fetch_assoc()): ?>
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 overflow-hidden">
+            <!-- Image Section -->
+            <div class="aspect-square bg-gray-50 relative group">
+                <img 
+                    src="<?= htmlspecialchars($row['image']) ?>" 
+                    alt="<?= htmlspecialchars($row['name']) ?>" 
+                    class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                >
+                <!-- Stock Badge -->
+                <div class="absolute top-3 right-3 flex items-center gap-2">
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full bg-white/90 backdrop-blur shadow-sm <?= 
+                        $row['stock'] > 10 ? 'text-green-700 bg-green-50' : 
+                        ($row['stock'] > 0 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50') 
+                    ?>">
+                        <?= $row['stock'] > 10 ? 'In Stock' : ($row['stock'] > 0 ? 'Low Stock' : 'Out of Stock') ?>
+                    </span>
                 </div>
+            </div>
+            
+            <!-- Content Section -->
+            <div class="p-5">
+                <!-- Product Name -->
+                <h3 class="text-xl font-semibold text-gray-900 mb-2 truncate"><?= htmlspecialchars($row['name']) ?></h3>
                 
-                <div class="p-4">
-                    <h3 class="text-lg font-medium text-gray-900 truncate mb-1"><?= htmlspecialchars($row['name']) ?></h3>
-                    <div class="flex justify-between items-center">
-                        <span class="text-xl font-semibold text-gray-900">$<?= number_format($row['price'], 2) ?></span>
-                        <div class="flex items-center gap-2">
-                            <a 
-                                href="edit.php?id=<?= $row['id'] ?>" 
-                                class="w-9 h-9 inline-flex items-center justify-center text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                                title="Edit"
-                            >
-                                <i class="fas fa-pencil-alt"></i>
-                            </a>
-                            <button 
-                                onclick="confirmDelete(<?= $row['id'] ?>)" 
-                                class="w-9 h-9 inline-flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg"
-                                title="Delete"
-                            >
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+                <!-- Price and Actions -->
+                <div class="flex justify-between items-center">
+                    <span class="text-2xl font-bold text-gray-900">$<?= number_format($row['price'], 2) ?></span>
+                    <div class="flex items-center gap-3">
+                        <!-- Edit Button -->
+                        <a 
+                            href="edit.php?id=<?= $row['id'] ?>" 
+                            class="w-10 h-10 inline-flex items-center justify-center text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors duration-200"
+                            title="Edit"
+                        >
+                            <i class="fas fa-pencil-alt"></i>
+                        </a>
+                        <!-- Delete Button -->
+                        <button 
+                            onclick="confirmDelete(<?= $row['id'] ?>)" 
+                            class="w-10 h-10 inline-flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                            title="Delete"
+                        >
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
             </div>
-            <?php endwhile; ?>
         </div>
-    <?php else: ?>
+        <?php endwhile; ?>
+    </div>
+<?php else: ?>
         <div class="text-center py-16 bg-white rounded-xl border border-gray-200">
             <div class="max-w-md mx-auto">
                 <div class="w-24 h-24 rounded-full bg-indigo-50 mx-auto mb-6 flex items-center justify-center">
